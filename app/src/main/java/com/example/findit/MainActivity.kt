@@ -1,10 +1,11 @@
 package com.example.findit
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
+import android.graphics.*
 import android.os.Bundle
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -13,22 +14,23 @@ import com.example.findit.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class Maze(bitmap: Bitmap) {
-    private val maze: IntArray
+    private val bitmap = bitmap
+    private val mat: IntArray
     private val w: Int = bitmap.width
     private val h: Int = bitmap.height
 
     init {
-        maze = IntArray(w * h)
-        bitmap.getPixels(maze, 0, 0, 0, 0, w, h)
+        mat = IntArray(w * h)
+        bitmap.getPixels(mat, 0, w, 0, 0, w, h)
     }
 
-    private fun isBlocked(x: Int, y: Int, thresh: Int = 100): Boolean {
-        val color = maze[y * w + x]
+    private fun isWhite(x: Int, y: Int, thresh: Int = 100): Boolean {
+        val color = mat[y * w + x] and 0x00FFFFFF
         val red = Color.red(color)
         val green = Color.green(color)
         val blue = Color.blue(color)
         val grayscale: Int = (0.299 * red + 0.587 * green + 0.114 * blue).toInt()
-        return grayscale < thresh
+        return grayscale > thresh
     }
 
     fun findPath(start: Pair<Int, Int>, end: Pair<Int, Int>): List<Pair<Int, Int>> {
@@ -60,13 +62,11 @@ class Maze(bitmap: Bitmap) {
             // Check neighbours
             neighbours.forEach {
                 val canVisit =
-                    it.first in 0..w && it.second in 0..h && isBlocked(
-                        it.first,
-                        it.second
-                    ) && !isVisited[it.second][it.first]
+                    it.first in 0 until w && it.second in 0 until h &&
+                            isWhite(it.first, it.second) && !isVisited[it.second][it.first]
                 if (canVisit) {
                     isVisited[it.second][it.first] = true
-                    parent[it.second][it.first] = it
+                    parent[it.second][it.first] = Pair(x, y)
                     queue.add(it)
                 }
             }
@@ -75,7 +75,7 @@ class Maze(bitmap: Bitmap) {
         // Restore path
         if (isFound) {
             var current = end
-            while (current != end) {
+            while (current != start) {
                 path.add(current)
                 current = parent[current.second][current.first]
             }
@@ -86,6 +86,25 @@ class Maze(bitmap: Bitmap) {
         return path
     }
 
+    fun drawPath(path: List<Pair<Int, Int>>): Bitmap {
+        val bitmapCopy = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+        var canvas = Canvas(bitmapCopy)
+        val paint = Paint().apply {
+            color = Color.GREEN
+            strokeWidth = 10F
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.SQUARE
+            strokeMiter = 20F
+        }
+        for (i in 1 until path.size) {
+            canvas.drawLine(
+                path[i - 1].first.toFloat(), path[i - 1].second.toFloat(),
+                path[i].first.toFloat(), path[i - 1].second.toFloat(),
+                paint
+            )
+        }
+        return bitmapCopy
+    }
 }
 
 class MainActivity : AppCompatActivity() {
@@ -112,7 +131,12 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         // Load maze from resource
-//        val img = BitmapFactory.decodeResource(resources, R.drawable.map_back)
-//        val maze = Maze(img)
+        var img = BitmapFactory.decodeResource(resources, R.drawable.map_back)
+        val maze = Maze(img)
+        val path = maze.findPath(Pair(250, 200), Pair(1000, 350))
+
+        var copy = maze.drawPath(path)
+        val imageView = findViewById<ImageView>(R.id.imageView)
+        imageView.setImageBitmap(copy)
     }
 }
