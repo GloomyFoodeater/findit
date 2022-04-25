@@ -5,17 +5,17 @@ import org.json.JSONStringer
 import org.json.JSONTokener
 
 data class Cell(
-    val isTraversable: Boolean, // Can be passed through irl
-    val isEndpoint: Boolean, // Can be used as source/destination point on map
-    val iconFileName: String,
+    val isRoad: Boolean, // Can be passed through irl
+    val isEnd: Boolean, // Can be used as source/destination point on map
+    val iconName: String,
 
     // Offsets of left top angle cell of large decoration
-    val offsetX: Int,
-    val offsetY: Int
+    val offX: Int,
+    val offY: Int
 )
 
 class Cells(json: String) {
-    private val cells: Array<Array<Cell>>
+    val cells: Array<Array<Cell>>
 
     init {
         // Parse outer json array
@@ -28,14 +28,14 @@ class Cells(json: String) {
 
                 // Parse json object
                 val jsonObj = jsonRow.getJSONObject(j)
-                val isTraversable = jsonObj.getBoolean("isTraversable")
-                val isEndpoint = jsonObj.getBoolean("isEndpoint")
-                val iconFileName = jsonObj.getString("iconFileName")
-                val offsetX = jsonObj.getInt("offsetX")
-                val offsetY = jsonObj.getInt("offsetY")
+                val isRoad = jsonObj.getBoolean("isRoad")
+                val isEnd = jsonObj.getBoolean("isEnd")
+                val iconName = jsonObj.getString("iconName")
+                val offX = jsonObj.getInt("offX")
+                val offY = jsonObj.getInt("offY")
 
                 // New object of Cell class
-                Cell(isTraversable, isEndpoint, iconFileName, offsetX, offsetY)
+                Cell(isRoad, isEnd, iconName, offX, offY)
             }
         }
     }
@@ -54,16 +54,16 @@ class Cells(json: String) {
                 jsonStringer.`object`()
 
                 // Write object
-                jsonStringer.key("isTraversable")
-                jsonStringer.value(cell.isTraversable)
-                jsonStringer.key("isEndpoint")
-                jsonStringer.value(cell.isEndpoint)
-                jsonStringer.key("iconFileName")
-                jsonStringer.value(cell.iconFileName)
-                jsonStringer.key("offsetX")
-                jsonStringer.value(cell.offsetX)
-                jsonStringer.key("offsetY")
-                jsonStringer.value(cell.offsetY)
+                jsonStringer.key("isRoad")
+                jsonStringer.value(cell.isRoad)
+                jsonStringer.key("isEnd")
+                jsonStringer.value(cell.isEnd)
+                jsonStringer.key("iconName")
+                jsonStringer.value(cell.iconName)
+                jsonStringer.key("offX")
+                jsonStringer.value(cell.offX)
+                jsonStringer.key("offY")
+                jsonStringer.value(cell.offY)
 
                 jsonStringer.endObject()
             }
@@ -72,4 +72,5 @@ class Cells(json: String) {
         jsonStringer.endArray()
         return jsonStringer.toString()
     }
+
 }
