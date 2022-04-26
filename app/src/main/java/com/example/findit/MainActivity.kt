@@ -11,14 +11,13 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.findit.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     // Draw maze on new bitmap
-    private fun drawMaze(maze: Maze, w: Float, h: Float, drawGrid: Boolean = false): Bitmap {
+    private fun drawMaze(maze: Maze, w: Float, h: Float): Bitmap {
 
         // Drawing data
         val bitmap = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
@@ -44,18 +43,6 @@ class MainActivity : AppCompatActivity() {
             // Iterate over cells
             var x = 0F
             row.forEach { cell ->
-                // Draw grid
-                if (drawGrid) {
-                    val bound = RectF(x, y, x + cellW, y + cellH)
-                    val paint = Paint()
-                    with(paint) {
-                        color = Color.BLACK
-                        strokeWidth = 2F
-                        style = Paint.Style.STROKE
-                    }
-                    canvas.drawRect(bound, paint)
-                }
-
                 // Draw icons
                 val rect = RectF(x, y, x + cellW * cell.cols, y + cellH * cell.rows)
                 when (cell.iconName) {
@@ -78,10 +65,9 @@ class MainActivity : AppCompatActivity() {
         maze: Maze,
         path: List<Pair<Int, Int>>,
         w: Float,
-        h: Float,
-        drawGrid: Boolean = false
+        h: Float
     ): Bitmap {
-        val bitmap = drawMaze(maze, w, h, drawGrid)
+        val bitmap = drawMaze(maze, w, h)
         val canvas = Canvas(bitmap)
         val paint = Paint()
         with(paint) {
@@ -126,8 +112,7 @@ class MainActivity : AppCompatActivity() {
         val path = maze.findPath(Pair(3, 4), Pair(7, 6))
         Log.i("PATH", path.joinToString(", "))
         val imgView = findViewById<ImageView>(R.id.imageView)
-        val img = drawMaze(maze, 800F, 2000F)
+        val img = drawPath(maze, path, 800F, 2000F)
         imgView.setImageBitmap(img)
-//        imgView.setImageBitmap(drawPath(maze, path, 800F, 2000F, true))
     }
 }
