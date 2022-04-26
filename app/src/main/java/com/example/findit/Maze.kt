@@ -1,13 +1,22 @@
 package com.example.findit
 
+import android.graphics.*
 import org.json.JSONArray
 import org.json.JSONStringer
 import org.json.JSONTokener
 
-class Maze(json: String) {
-    val cells: Array<Array<Cell>>
-    val h: Int
-    val w: Int
+// 2D matrix of cells with serialization, maze search and drawing logic
+class Maze(
+    json: String, // String with matrix data in JSON format
+    private val bitmapW: Float, // Width of output bitmap picture
+    private val bitmapH: Float, // Height of output bitmap picture
+    private val icons: Map<String, Bitmap> // Dictionary of icon names and icons
+) {
+    val cells: Array<Array<Cell>> // 2D matrix
+    val h: Int // Logical height, i.e. number of rows
+    val w: Int // Logical width, i.e. number of columns
+    private val cellW: Float // Width of cell in picture
+    private val cellH: Float // Height of cell in picture
 
     // Deserialize maze from json
     init {
@@ -31,6 +40,8 @@ class Maze(json: String) {
         }
         h = cells.size
         w = cells[0].size
+        cellH = bitmapH / h
+        cellW = bitmapW / w
     }
 
     // Serialize maze to json
@@ -123,4 +134,54 @@ class Maze(json: String) {
         return path
     }
 
+    // Draw maze on new bitmap
+    fun drawMaze(): Bitmap {
+
+        // Drawing data
+        val bitmap = Bitmap.createBitmap(bitmapW.toInt(), bitmapH.toInt(), Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawRGB(255, 255, 255)
+
+        // Iterate over rows
+        var y = 0F
+        cells.forEach { row ->
+
+            // Iterate over cells
+            var x = 0F
+            row.forEach { cell ->
+
+                // Draw icon
+                if (cell.iconName in icons.keys) {
+                    val bounds = RectF(x, y, x + cellW * cell.cols, y + cellH * cell.rows)
+                    canvas.drawBitmap(icons[cell.iconName]!!, null, bounds, null)
+                }
+                x += cellW
+            }
+            y += cellH
+        }
+        return bitmap
+    }
+
+    // Draw maze and path on new bitmap
+    fun drawPath(path: List<Pair<Int, Int>>): Bitmap {
+
+        // Drawing data
+        val bitmap = drawMaze()
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+        with(paint) {
+            color = Color.GREEN
+            strokeWidth = 7F
+        }
+
+        // Draw lines between adjacent cells' centers
+        for (i in 0 until path.size - 1) {
+            val x1 = cellW * (path[i].first + .5F)
+            val y1 = cellH * (path[i].second + .5F)
+            val x2 = cellW * (path[i + 1].first + .5F)
+            val y2 = cellH * (path[i + 1].second + .5F)
+            canvas.drawLine(x1, y1, x2, y2, paint)
+        }
+        return bitmap
+    }
 }
