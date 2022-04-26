@@ -2,6 +2,7 @@ package com.example.findit
 
 import android.graphics.*
 import android.os.Bundle
+import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -16,27 +17,42 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     // Draw maze on new bitmap
-    private fun drawCells(maze: Cells, w: Int, h: Int): Bitmap {
+    private fun drawMaze(maze: Maze, w: Float, h: Float, drawGrid: Boolean = false): Bitmap {
 
         // Drawing data
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        canvas.drawRGB(255,255,255)
+        canvas.drawRGB(255, 255, 255)
 
         // Resource images
         val chairBitmap = BitmapFactory.decodeResource(resources, R.drawable.chair)
         val tableBitmap = BitmapFactory.decodeResource(resources, R.drawable.table)
 
         // Coordinate data
-        var y = 0F
-        val xStep = w.toFloat() / maze.cells[0].size
-        val yStep = h.toFloat() / maze.cells.size
+        val xStep = w / maze.w
+        val yStep = h / maze.h
 
-        // Iterate over cells
+        // Iterate over rows
+        var y = 0F
         maze.cells.forEach { row ->
+
+            // Iterate over cells
             var x = 0F
             row.forEach { cell ->
                 val rect = RectF(x, y, x + xStep, y + yStep)
+
+                // Draw grid
+                if (drawGrid) {
+                    val paint = Paint()
+                    with(paint) {
+                        color = Color.BLACK
+                        strokeWidth = 2F
+                        style = Paint.Style.STROKE
+                    }
+                    canvas.drawRect(rect, paint)
+                }
+
+                // Draw icons
                 when (cell.iconName) {
                     "chair" -> {
                         canvas.drawBitmap(chairBitmap, null, rect, null)
@@ -51,6 +67,33 @@ class MainActivity : AppCompatActivity() {
             y += yStep
         }
 
+        return bitmap
+    }
+
+    // Draw maze and path on new bitmap
+    private fun drawPath(
+        maze: Maze,
+        path: List<Pair<Int, Int>>,
+        w: Float,
+        h: Float,
+        drawGrid: Boolean = false
+    ): Bitmap {
+        val bitmap = drawMaze(maze, w, h, drawGrid)
+        val canvas = Canvas(bitmap)
+        val paint = Paint()
+        with(paint) {
+            color = Color.GREEN
+            strokeWidth = 4F
+        }
+        val cellW = w / maze.w
+        val cellH = h / maze.h
+        for (i in 0 until path.size - 1) {
+            val x1 = cellW * (path[i].first + .5F)
+            val y1 = cellH * (path[i].second + .5F)
+            val x2 = cellW * (path[i + 1].first + .5F)
+            val y2 = cellH * (path[i + 1].second + .5F)
+            canvas.drawLine(x1, y1, x2, y2, paint)
+        }
         return bitmap
     }
 
@@ -76,8 +119,10 @@ class MainActivity : AppCompatActivity() {
         val json = assets.open("maze.json").bufferedReader().use {
             it.readText()
         }
-        val cells = Cells(json)
+        val maze = Maze(json)
+        val path = maze.findPath(Pair(3, 4), Pair(7, 6))
+        Log.i("PATH", path.joinToString(", "))
         val imgView = findViewById<ImageView>(R.id.imageView)
-        imgView.setImageBitmap(drawCells(cells, 2000, 4000))
+        imgView.setImageBitmap(drawPath(maze, path, 800F, 2000F, true))
     }
 }

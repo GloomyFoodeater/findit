@@ -1,40 +1,78 @@
 package com.example.findit
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import org.json.JSONArray
+import org.json.JSONStringer
+import org.json.JSONTokener
 
-class Maze(private val bitmap: Bitmap) {
-    private val mat: IntArray
-    private val w: Int = bitmap.width
-    private val h: Int = bitmap.height
+class Maze(json: String) {
+    val cells: Array<Array<Cell>>
+    val h: Int
+    val w: Int
 
-    // Init maze matrix
+    // Deserialize maze from json
     init {
-        mat = IntArray(w * h)
-        bitmap.getPixels(mat, 0, w, 0, 0, w, h)
+        // Parse outer json array
+        val jsonMat = JSONTokener(json).nextValue() as JSONArray
+        cells = Array(jsonMat.length()) { i ->
+            // Parse inner json array
+            val jsonRow = jsonMat.getJSONArray(i)
+            Array(jsonRow.length()) { j ->
+                // Parse json object
+                val jsonObj = jsonRow.getJSONObject(j)
+                val isRoad = jsonObj.getBoolean("isRoad")
+                val isEnd = jsonObj.getBoolean("isEnd")
+                val iconName = jsonObj.getString("iconName")
+                val offX = jsonObj.getInt("offX")
+                val offY = jsonObj.getInt("offY")
+
+                // New object of Cell class
+                Cell(isRoad, isEnd, iconName, offX, offY)
+            }
+        }
+        h = cells.size
+        w = cells[0].size
     }
 
-    // Check if (x, y) tile is traversable
-    private fun isTraversable(x: Int, y: Int, thresh: Int = 100): Boolean {
-        val color = mat[y * w + x] and 0x00FFFFFF
-        val red = Color.red(color)
-        val green = Color.green(color)
-        val blue = Color.blue(color)
-        val grayscale: Int = (0.299 * red + 0.587 * green + 0.114 * blue).toInt()
-        return grayscale > thresh
+    // Serialize maze to json
+    fun getJson(): String {
+        val jsonStringer = JSONStringer()
+
+        // Write matrix
+        jsonStringer.array()
+        cells.forEach { row ->
+
+            // Write row
+            jsonStringer.array()
+            row.forEach { cell ->
+                jsonStringer.`object`()
+
+                // Write object
+                jsonStringer.key("isRoad")
+                jsonStringer.value(cell.isRoad)
+                jsonStringer.key("isEnd")
+                jsonStringer.value(cell.isEnd)
+                jsonStringer.key("iconName")
+                jsonStringer.value(cell.iconName)
+                jsonStringer.key("offX")
+                jsonStringer.value(cell.offX)
+                jsonStringer.key("offY")
+                jsonStringer.value(cell.offY)
+
+                jsonStringer.endObject()
+            }
+            jsonStringer.endArray()
+        }
+        jsonStringer.endArray()
+        return jsonStringer.toString()
     }
 
-    // Use bfs to find shortest path between start and end points
+    // Find shortest path via bfs
     fun findPath(start: Pair<Int, Int>, end: Pair<Int, Int>): List<Pair<Int, Int>> {
 
         // Init data
         val path = arrayListOf<Pair<Int, Int>>()
         val isVisited = Array(h) { BooleanArray(w) { false } }
-        val parent = Array(h) {
-            Array(w) { Pair(-1, -1) }
-        }
+        val parent = Array(h) { Array(w) { Pair(-1, -1) } }
 
         // Find path
         var isFound = false
@@ -45,9 +83,10 @@ class Maze(private val bitmap: Bitmap) {
             // Visit tile
             val (x, y) = queue.removeFirst()
             isFound = Pair(x, y) == end
-            if (isFound)
+            if (isFound) {
+                queue.clear()
                 break
-
+            }
             // Enqueue neighbours
             val neighbours = arrayOf(
                 Pair(x + 1, y),
@@ -59,8 +98,8 @@ class Maze(private val bitmap: Bitmap) {
                 // Not out of range & is traversable & is not visited
                 val canVisit = it.first in 0 until w &&
                         it.second in 0 until h &&
-                        isTraversable(it.first, it.second) &&
-                        !isVisited[it.second][it.first]
+                        (cells[it.second][it.first].isRoad && !isVisited[it.second][it.first]
+                                || it == end)
                 if (canVisit) {
                     // Enqueueing
                     isVisited[it.second][it.first] = true
@@ -84,24 +123,4 @@ class Maze(private val bitmap: Bitmap) {
         return path
     }
 
-    // Draw path on copy of passed bitmap
-    fun drawPath(path: List<Pair<Int, Int>>): Bitmap {
-        val bitmapCopy = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-        val canvas = Canvas(bitmapCopy)
-        val paint = Paint().apply {
-            color = Color.GREEN
-            strokeWidth = 10F
-            style = Paint.Style.STROKE
-            strokeCap = Paint.Cap.SQUARE
-            strokeMiter = 20F
-        }
-        for (i in 1 until path.size) {
-            canvas.drawLine(
-                path[i - 1].first.toFloat(), path[i - 1].second.toFloat(),
-                path[i].first.toFloat(), path[i - 1].second.toFloat(),
-                paint
-            )
-        }
-        return bitmapCopy
-    }
 }
