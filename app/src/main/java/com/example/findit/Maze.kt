@@ -22,11 +22,11 @@ class Maze(json: String) {
                 val isRoad = jsonObj.getBoolean("isRoad")
                 val isEnd = jsonObj.getBoolean("isEnd")
                 val iconName = jsonObj.getString("iconName")
-                val offX = jsonObj.getInt("offX")
-                val offY = jsonObj.getInt("offY")
+                val cols = jsonObj.getInt("cols")
+                val rows = jsonObj.getInt("rows")
 
                 // New object of Cell class
-                Cell(isRoad, isEnd, iconName, offX, offY)
+                Cell(isRoad, isEnd, iconName, cols, rows)
             }
         }
         h = cells.size
@@ -53,10 +53,10 @@ class Maze(json: String) {
                 jsonStringer.value(cell.isEnd)
                 jsonStringer.key("iconName")
                 jsonStringer.value(cell.iconName)
-                jsonStringer.key("offX")
-                jsonStringer.value(cell.offX)
-                jsonStringer.key("offY")
-                jsonStringer.value(cell.offY)
+                jsonStringer.key("cols")
+                jsonStringer.value(cell.cols)
+                jsonStringer.key("rows")
+                jsonStringer.value(cell.rows)
 
                 jsonStringer.endObject()
             }

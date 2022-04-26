@@ -11,6 +11,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.findit.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,12 +26,16 @@ class MainActivity : AppCompatActivity() {
         canvas.drawRGB(255, 255, 255)
 
         // Resource images
-        val chairBitmap = BitmapFactory.decodeResource(resources, R.drawable.chair)
-        val tableBitmap = BitmapFactory.decodeResource(resources, R.drawable.table)
+        val chairBit = BitmapFactory.decodeResource(resources, R.drawable.chair)
+        val tableBit = BitmapFactory.decodeResource(resources, R.drawable.table)
+        val armchairLeftBit = BitmapFactory.decodeResource(resources, R.drawable.armchair_left)
+        val armchairRightBit = BitmapFactory.decodeResource(resources, R.drawable.armchair_right)
+        val tableLargeBit = BitmapFactory.decodeResource(resources, R.drawable.table_large)
+        val deskRowBit = BitmapFactory.decodeResource(resources, R.drawable.desk_row)
 
         // Coordinate data
-        val xStep = w / maze.w
-        val yStep = h / maze.h
+        val cellW = w / maze.w
+        val cellH = h / maze.h
 
         // Iterate over rows
         var y = 0F
@@ -39,34 +44,32 @@ class MainActivity : AppCompatActivity() {
             // Iterate over cells
             var x = 0F
             row.forEach { cell ->
-                val rect = RectF(x, y, x + xStep, y + yStep)
-
                 // Draw grid
                 if (drawGrid) {
+                    val bound = RectF(x, y, x + cellW, y + cellH)
                     val paint = Paint()
                     with(paint) {
                         color = Color.BLACK
                         strokeWidth = 2F
                         style = Paint.Style.STROKE
                     }
-                    canvas.drawRect(rect, paint)
+                    canvas.drawRect(bound, paint)
                 }
 
                 // Draw icons
+                val rect = RectF(x, y, x + cellW * cell.cols, y + cellH * cell.rows)
                 when (cell.iconName) {
-                    "chair" -> {
-                        canvas.drawBitmap(chairBitmap, null, rect, null)
-                    }
-                    "table" -> {
-                        rect.right += xStep
-                        canvas.drawBitmap(tableBitmap, null, rect, null)
-                    }
+                    "chair" -> canvas.drawBitmap(chairBit, null, rect, null)
+                    "table" -> canvas.drawBitmap(tableBit, null, rect, null)
+                    "armchair_left" -> canvas.drawBitmap(armchairLeftBit, null, rect, null)
+                    "armchair_right" -> canvas.drawBitmap(armchairRightBit, null, rect, null)
+                    "table_large" -> canvas.drawBitmap(tableLargeBit, null, rect, null)
+                    "desk_row" -> canvas.drawBitmap(deskRowBit, null, rect, null)
                 }
-                x += xStep
+                x += cellW
             }
-            y += yStep
+            y += cellH
         }
-
         return bitmap
     }
 
@@ -123,6 +126,8 @@ class MainActivity : AppCompatActivity() {
         val path = maze.findPath(Pair(3, 4), Pair(7, 6))
         Log.i("PATH", path.joinToString(", "))
         val imgView = findViewById<ImageView>(R.id.imageView)
-        imgView.setImageBitmap(drawPath(maze, path, 800F, 2000F, true))
+        val img = drawMaze(maze, 800F, 2000F)
+        imgView.setImageBitmap(img)
+//        imgView.setImageBitmap(drawPath(maze, path, 800F, 2000F, true))
     }
 }
