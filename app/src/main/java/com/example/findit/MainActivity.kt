@@ -25,6 +25,8 @@ class MainActivity : AppCompatActivity() {
         val armchairRightBit = BitmapFactory.decodeResource(resources, R.drawable.armchair_right)
         val tableLargeBit = BitmapFactory.decodeResource(resources, R.drawable.table_large)
         val deskRowBit = BitmapFactory.decodeResource(resources, R.drawable.desk_row)
+        val stallBit = BitmapFactory.decodeResource(resources, R.drawable.stall)
+        val departmentBit = BitmapFactory.decodeResource(resources, R.drawable.department)
 
         return mapOf(
             "chair" to chairBit,
@@ -32,7 +34,9 @@ class MainActivity : AppCompatActivity() {
             "armchair_left" to armchairLeftBit,
             "armchair_right" to armchairRightBit,
             "table_large" to tableLargeBit,
-            "desk_row" to deskRowBit
+            "desk_row" to deskRowBit,
+            "stall" to stallBit,
+            "department" to departmentBit
         )
     }
 
